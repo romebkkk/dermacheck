@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DermaCheck — Cribado Precoz de Melanoma (Regla ABCDE & Glasgow 7-Point)</title>
+  <meta name="description" content="Autoexploración y detección precoz de melanoma cutáneo. Regla ABCDE de dermatología, algoritmo de Glasgow y regla milimétrica calibrada en pantalla con tu DNI. 100% privado en tu móvil.">
+  <style>
+    :root {
+      --bg: #090e17;
+      --card: #141d2b;
+      --card-hover: #1e2c40;
+      --border: #24344d;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #f43f5e;
+      --primary-hover: #e11d48;
+      --accent: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 20px 16px 80px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    .container { max-width: 660px; width: 100%; }
+
+    header { text-align: center; margin-bottom: 24px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; background: rgba(244, 63, 94, 0.15); color: var(--primary); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 999px; font-size: 0.8rem; font-weight: 700; margin-bottom: 12px; }
+    h1 { font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
+
+    .nav-tabs { display: flex; gap: 6px; background: rgba(20, 29, 43, 0.8); padding: 6px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); overflow-x: auto; }
+    .nav-btn { flex: 1; padding: 10px 10px; border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 0.85rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center; }
+    .nav-btn.active { background: var(--primary); color: #fff; font-weight: 700; box-shadow: 0 4px 14px rgba(244, 63, 94, 0.35); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; }
+    .card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+    /* Calibrador de tarjeta */
+    .calib-box { border: 2px dashed var(--primary); border-radius: 10px; margin: 16px auto; height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgba(244, 63, 94, 0.04); position: relative; transition: width 0.1s; }
+    .ruler-circle { border: 3px solid #38bdf8; border-radius: 50%; margin: 16px auto; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: #38bdf8; }
+
+    /* ABCDE cards */
+    .abcde-item { background: #0c1420; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; gap: 14px; align-items: flex-start; cursor: pointer; transition: all 0.2s; }
+    .abcde-item:hover { border-color: var(--card-hover); }
+    .abcde-letter { width: 40px; height: 40px; border-radius: 10px; background: rgba(244, 63, 94, 0.18); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800; flex-shrink: 0; }
+    .abcde-text { flex: 1; }
+    .abcde-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .abcde-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.4; }
+    .abcde-check { accent-color: var(--primary); transform: scale(1.3); margin-top: 4px; }
+
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), #be123c); color: #fff; box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4); }
+    .btn-primary:hover { opacity: 0.95; transform: translateY(-1px); }
+
+    .result-box { padding: 20px; border-radius: 14px; text-align: center; margin-top: 16px; border: 1px solid var(--border); }
+    
+    .disclaimer { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 12px; padding: 12px 14px; font-size: 0.8rem; color: #fca5a5; line-height: 1.45; margin-top: 24px; text-align: center; }
+    footer { text-align: center; margin-top: 24px; font-size: 0.8rem; color: var(--muted); }
+    footer a { color: var(--primary); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="badge">🔍 Dermatología Preventiva · AEDV / NICE Guidelines</div>
+    <h1>DermaCheck</h1>
+    <p class="subtitle">Autoexploración y detección precoz de melanoma cutáneo mediante la regla ABCDE y el test de Glasgow.</p>
+  </header>
+
+  <nav class="nav-tabs">
+    <button class="nav-btn active" onclick="cambiarTab('abcde')">📋 Regla ABCDE</button>
+    <button class="nav-btn" onclick="cambiarTab('glasgow')">🔬 Test Glasgow (NICE)</button>
+    <button class="nav-btn" onclick="cambiarTab('calibrador')">📏 Regla Milimétrica (DNI)</button>
+  </nav>
+
+  <!-- TAB 1: REGLA ABCDE -->
+  <div id="tab-abcde" class="tab-content active">
+    <div class="card">
+      <div class="card-title">🔍 Evaluación del Lunar o Mancha</div>
+      <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
+        Marca las características que observes en la lesión sospechosa:
+      </p>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="abcde-a" class="abcde-check">
+        <div class="abcde-letter">A</div>
+        <div class="abcde-text">
+          <div class="abcde-title">Asimetría</div>
+          <div class="abcde-desc">Si trazas una línea imaginaria por el medio, una mitad no se parece en absoluto a la otra mitad.</div>
+        </div>
+      </label>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="abcde-b" class="abcde-check">
+        <div class="abcde-letter">B</div>
+        <div class="abcde-text">
+          <div class="abcde-title">Bordes irregulares</div>
+          <div class="abcde-desc">Los contornos son borrosos, ondulados, dentados o con picos, no están limpiamente delimitados.</div>
+        </div>
+      </label>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="abcde-c" class="abcde-check">
+        <div class="abcde-letter">C</div>
+        <div class="abcde-text">
+          <div class="abcde-title">Color no homogéneo</div>
+          <div class="abcde-desc">Tiene 2 o más colores distintos: zonas marrones, negras, rojizas, blanquecinas o azuladas.</div>
+        </div>
+      </label>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="abcde-d" class="abcde-check">
+        <div class="abcde-letter">D</div>
+        <div class="abcde-text">
+          <div class="abcde-title">Diámetro > 6 mm</div>
+          <div class="abcde-desc">El tamaño supera los 6 mm (equivalente a la goma de borrar de un lápiz tradicional). Puedes comprobarlo en la pestaña Regla.</div>
+        </div>
+      </label>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="abcde-e" class="abcde-check">
+        <div class="abcde-letter">E</div>
+        <div class="abcde-text">
+          <div class="abcde-title">Evolución / Cambio reciente</div>
+          <div class="abcde-desc">Ha cambiado de tamaño, forma o grosor en los últimos meses, o ha empezado a picar, doler o sangrar.</div>
+        </div>
+      </label>
+
+      <div style="background: #0c1420; padding: 12px; border-radius: 10px; margin-bottom: 16px; border: 1px solid var(--border);">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+          <input type="checkbox" id="patito-feo" style="accent-color: var(--primary);">
+          <strong>Signo del "Patito Feo":</strong> Esta mancha es visiblemente distinta a todos mis demás lunares.
+        </label>
+      </div>
+
+      <button class="btn btn-primary" onclick="evaluarLesionUI()">📊 Analizar Nivel de Sospecha</button>
+
+      <div id="resultado-abcde" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: GLASGOW 7-POINT -->
+  <div id="tab-glasgow" class="tab-content">
+    <div class="card">
+      <div class="card-title">🔬 Algoritmo de 7 Puntos de Glasgow (Criterio NICE)</div>
+      <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
+        Utilizado en atención primaria para decidir si se deriva de forma urgente al dermatólogo.
+      </p>
+
+      <div style="font-size: 0.85rem; font-weight: 700; color: #f43f5e; margin-bottom: 8px;">Criterios Mayores (2 puntos c/u):</div>
+      
+      <label class="abcde-item">
+        <input type="checkbox" id="g-cambio" class="abcde-check">
+        <div class="abcde-text">
+          <div class="abcde-title">1. Cambio de tamaño o lesión nueva (+2 pts)</div>
+          <div class="abcde-desc">Crecimiento continuo o aparición reciente en un adulto.</div>
+        </div>
+      </label>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="g-forma" class="abcde-check">
+        <div class="abcde-text">
+          <div class="abcde-title">2. Forma irregular (+2 pts)</div>
+          <div class="abcde-desc">Contornos asimétricos o desestructurados.</div>
+        </div>
+      </label>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="g-color" class="abcde-check">
+        <div class="abcde-text">
+          <div class="abcde-title">3. Variación de color (+2 pts)</div>
+          <div class="abcde-desc">Múltiples tonos de pigmentación dentro de la misma lesión.</div>
+        </div>
+      </label>
+
+      <div style="font-size: 0.85rem; font-weight: 700; color: #38bdf8; margin: 16px 0 8px;">Criterios Menores (1 punto c/u):</div>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="g-diametro" class="abcde-check">
+        <div class="abcde-text">
+          <div class="abcde-title">4. Diámetro ≥ 7 mm (+1 pt)</div>
+        </div>
+      </label>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="g-inflamacion" class="abcde-check">
+        <div class="abcde-text">
+          <div class="abcde-title">5. Inflamación / Halo rojo (+1 pt)</div>
+        </div>
+      </label>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="g-costra" class="abcde-check">
+        <div class="abcde-text">
+          <div class="abcde-title">6. Costra o sangrado espontáneo (+1 pt)</div>
+        </div>
+      </label>
+
+      <label class="abcde-item">
+        <input type="checkbox" id="g-sensibilidad" class="abcde-check">
+        <div class="abcde-text">
+          <div class="abcde-title">7. Picor, dolor o escozor (+1 pt)</div>
+        </div>
+      </label>
+
+      <button class="btn btn-primary" onclick="evaluarGlasgowUI()">Calcular Criterio Glasgow</button>
+
+      <div id="resultado-glasgow" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: CALIBRADOR CON DNI -->
+  <div id="tab-calibrador" class="tab-content">
+    <div class="card">
+      <div class="card-title">📏 Calibrador Milimétrico en Pantalla (DNI / Tarjeta)</div>
+      <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.5;">
+        Todas las tarjetas bancarias y el DNI español miden exactamente <strong>85.6 milímetros de ancho</strong> (Estándar ISO/IEC 7810 ID-1).
+      </p>
+
+      <div style="margin: 16px 0;">
+        <label for="card-slider" style="font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; display: block;">
+          Coloca tu DNI o tarjeta física sobre el recuadro y mueve el deslizador hasta que coincidan exactamente:
+        </label>
+        <input type="range" id="card-slider" min="200" max="450" value="320" style="width: 100%; accent-color: var(--primary);" oninput="ajustarTarjeta(this.value)">
+      </div>
+
+      <div class="calib-box" id="card-box" style="width: 320px;">
+        <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary);">COLOCA AQUÍ TU TARJETA O DNI FÍSICO</div>
+        <div style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Ajusta el ancho con el control superior</div>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <div style="font-size: 0.9rem; font-weight: 700; color: #cbd5e1; margin-bottom: 8px;">
+          Círculo de Referencia Calibrado de 6 mm (Umbral ABCDE):
+        </div>
+        <div class="ruler-circle" id="circle-6mm" style="width: 22px; height: 22px;"></div>
+        <p style="font-size: 0.8rem; color: var(--muted);">
+          Si tu lunar o mancha es más grande que este círculo exacto, cumple el criterio <strong>D (Diámetro > 6 mm)</strong>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ <strong>Aviso Médico Oficial:</strong> DermaCheck es una herramienta de cribado orientativo y educación sanitaria basada en la regla ABCDE de la AEDV y el algoritmo Glasgow de NICE. No sustituye la dermatoscopia óptica ni la biopsia anatomopatológica realizada por un médico especialista. Ante cualquier lunar sospechoso o sangrante, consulta a tu médico.
+  </div>
+
+  <footer>
+    <p>Desarrollado con ❤️ por <a href="https://github.com/romebkkk" target="_blank">DataFlow Elegance</a> · Ismael Ben Kazem · Código Abierto (MIT)</p>
+  </footer>
+</div>
+
+<script src="dermacheck.js"></script>
+<script>
+  function cambiarTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+    document.querySelectorAll('.nav-btn').forEach(function(el) { el.classList.remove('active'); });
+    document.getElementById('tab-' + tab).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function ajustarTarjeta(anchoPx) {
+    document.getElementById('card-box').style.width = anchoPx + 'px';
+    var cal = DermaCheck.calcularPixelesPorMilimetro(anchoPx);
+    var circ = document.getElementById('circle-6mm');
+    circ.style.width = cal.regla6mmPx + 'px';
+    circ.style.height = cal.regla6mmPx + 'px';
+  }
+
+  function evaluarLesionUI() {
+    var params = {
+      asimetria: document.getElementById('abcde-a').checked,
+      bordesIrregulares: document.getElementById('abcde-b').checked,
+      colorHeterogeneo: document.getElementById('abcde-c').checked,
+      diametroMayor6mm: document.getElementById('abcde-d').checked,
+      evolucionReciente: document.getElementById('abcde-e').checked,
+      esPatitoFeo: document.getElementById('patito-feo').checked
+    };
+
+    var r = DermaCheck.evaluarABCDE(params);
+    var pat = DermaCheck.evaluarPatitoFeo(params.esPatitoFeo);
+    var cont = document.getElementById('resultado-abcde');
+    cont.style.display = 'block';
+
+    cont.innerHTML = `
+      <div class="result-box card" style="border-top: 5px solid ${r.color};">
+        <h3 style="color: ${r.color}; font-size: 1.25rem; margin-bottom: 8px;">
+          Riesgo: ${r.nivelRiesgo} (${r.totalPositivos} de 5 criterios ABCDE)
+        </h3>
+        <p style="font-size: 0.95rem; line-height: 1.5; color: #f1f5f9; margin-bottom: 10px;">
+          ${r.accion}
+        </p>
+        ${params.esPatitoFeo ? `
+          <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 10px; border-radius: 8px; font-size: 0.85rem; color: #fca5a5; margin-top: 10px;">
+            ⚠️ <strong>Signo del Patito Feo detectado:</strong> ${pat.multiplicadorRiesgo}
+          </div>
+        ` : ''}
+      </div>
+    `;
+    cont.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function evaluarGlasgowUI() {
+    var params = {
+      cambioTamanio: document.getElementById('g-cambio').checked,
+      formaIrregular: document.getElementById('g-forma').checked,
+      colorIrregular: document.getElementById('g-color').checked,
+      diametroMayor7mm: document.getElementById('g-diametro').checked,
+      inflamacion: document.getElementById('g-inflamacion').checked,
+      costraSangrado: document.getElementById('g-costra').checked,
+      cambioSensibilidad: document.getElementById('g-sensibilidad').checked
+    };
+
+    var r = DermaCheck.evaluarGlasgow7Puntos(params);
+    var cont = document.getElementById('resultado-glasgow');
+    cont.style.display = 'block';
+
+    var color = r.derivacionUrgenteRecomendada ? '#ef4444' : '#10b981';
+
+    cont.innerHTML = `
+      <div class="result-box card" style="border-top: 5px solid ${color};">
+        <div style="font-size: 1.8rem; font-weight: 800; color: ${color}; margin-bottom: 4px;">
+          ${r.puntosTotales} Puntos
+        </div>
+        <div style="font-size: 0.9rem; font-weight: 700; color: ${color}; margin-bottom: 10px;">
+          ${r.derivacionUrgenteRecomendada ? '🚨 DERIVACIÓN URGENTE A DERMATOLOGÍA (Criterio NICE ≥3)' : '✅ Puntuación < 3 (Bajo índice de sospecha)'}
+        </div>
+        <p style="font-size: 0.9rem; line-height: 1.5; color: #e2e8f0;">
+          ${r.recomendacion}
+        </p>
+      </div>
+    `;
+    cont.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  window.onload = function() {
+    ajustarTarjeta(320);
+  };
+</script>
+</body>
+</html>
